@@ -97,6 +97,17 @@ void tokenize() {
             curr = tok;
         }
     }
+    if (curr->kind != 0) {
+        token *tok = malloc(sizeof(token));
+        tok->ptr = p;
+        tok->kind = 0;
+        tok->len = 1;
+        tok->next = NULL;
+        tok->prev = curr;
+        tok->line = line;
+        curr->next = tok;
+        curr = tok;
+    }
     while (curr->prev != NULL) {
         curr = curr->prev;
     }
@@ -221,7 +232,16 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         error("no args");
     }
-    char *buf = read_file(argv[1]);
+    char *buf;
+    if (strcmp(argv[1], "-e") == 0) {
+        if (argc < 3) {
+            error("require string");
+        }
+        buf = calloc(1, sizeof(char) * strlen(argv[2]));
+        strncpy(buf, argv[2], strlen(argv[2]));
+    } else {
+        buf = read_file(argv[1]);
+    }
     p = buf;
     tokenize();
     node *n = parse();
