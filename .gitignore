@@ -1,3 +1,5 @@
 *.o
+*.s
 simm
+tmp*
 /tmp

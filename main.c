@@ -153,15 +153,15 @@ node *primary_expr() {
     }
 }
 
-op_bp new_bp(int left, int right) {
-    op_bp bp = {
+binding_power new_bp(int left, int right) {
+    binding_power bp = {
         .left = left,
         .right = right,
     };
     return bp;
 }
 
-op_bp infix_binding_power(token *op) {
+binding_power infix_binding_power(token *op) {
     switch (op->kind) {
         case '+':
         case '-':
@@ -178,7 +178,7 @@ node *expr_bp(int min_bp) {
     node *lhs = primary_expr();
     for (;;) {
         token *op = curr;
-        op_bp bp = infix_binding_power(op);
+        binding_power bp = infix_binding_power(op);
         if (bp.left == -1 && bp.right == -1) {
             break;
         }
@@ -228,6 +228,55 @@ int eval(node *n) {
     error("eval failed");
 }
 
+void emit(const char *fmt, ...) {
+    va_list ap;
+    FILE *fp = stdout;
+    va_start(ap, fmt);
+    vfprintf(fp, fmt, ap);
+    fprintf(fp, "\n");
+    va_end(ap);
+}
+
+void codegen_expr(node *n) {
+    if (n->node_kind == NODE_BINARY) {
+        codegen_expr(n->binary.lhs);
+        codegen_expr(n->binary.rhs);
+        emit("  pop rdi");
+        emit("  pop rax");
+        switch (n->binary.op->kind) {
+            case '+':
+                emit("  add rax, rdi");
+                break;
+            case '-':
+                emit("  sub rax, rdi");
+                break;
+            case '*':
+                emit("  imul rax, rdi");
+                break;
+            case '/':
+                emit("  cqo");
+                emit("  idiv rdi");
+                break;
+            default:
+                error("unimplemented op");
+        }
+        emit("  push rax");
+    } else if (n->node_kind == NODE_INTEGER) {
+        emit("  push %d", n->integer.num);
+    } else {
+        error("unimplemented expr");
+    }
+}
+
+void codegen(node *n) {
+    emit(".intel_syntax noprefix");
+    emit(".globl main");
+    emit("main:");
+    codegen_expr(n);
+    emit("  pop rax");
+    emit("  ret");
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         error("no args");
@@ -245,6 +294,7 @@ int main(int argc, char **argv) {
     p = buf;
     tokenize();
     node *n = parse();
-    printf("eval: %d\n", eval(n));
+    codegen(n);
+    // printf("eval: %d\n", eval(n));
     return 0;
 }

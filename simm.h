@@ -37,8 +37,8 @@ struct node {
     } binary;
 };
 
-typedef struct op_bp op_bp;
-struct op_bp {
+typedef struct binding_power binding_power;
+struct binding_power {
     int left;
     int right;
 };
