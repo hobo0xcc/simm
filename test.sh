@@ -21,6 +21,6 @@ r () {
     rm -rf tmp0 tmp.s
 }
 
-r "1 + 2" 3
-r "1 + 2 * 3" 7
-r "42 / 2 + 1" 22
+r "return 1 + 2;" 3
+r "return 1 + 2 * 3;" 7
+r "return 42 / 2 + 1;" 22
